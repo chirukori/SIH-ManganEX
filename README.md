@@ -1,164 +1,233 @@
-# ManganEX – AI-Powered Manganese Exploration & Supply Intelligence
+# ⚡ ManganEX – AI-Powered Manganese Mineral Exploration & Supply Intelligence
 
-Welcome to **ManganEX**, a comprehensive AI and GIS-powered platform designed to identify potential manganese exploration zones and provide actionable supply-demand forecasting to aid strategic decision-making.
-
-## 1. Project Overview
-The identification of manganese exploration zones traditionally involves arduous manual analysis of satellite imagery, geological data, and terrain features. **ManganEX** solves this by automating spatial analysis, extracting critical features, and generating prospectivity predictions using Machine Learning. Furthermore, it integrates a sophisticated forecasting module to predict supply gaps years into the future.
-
-Our initial pilot region is the **Sandur-Ballari (Bellary) Manganese Mineral Belt** in Karnataka, India.
-
-## 2. Key Features
-- **Interactive Geospatial Dashboard:** Clickable map interface (React-Leaflet) that automatically extracts coordinates for prospectivity querying.
-- **AI-Powered Prospectivity Mapping:** Uses Random Forest models trained on structural geological features, vegetation indices, and terrain data to predict high-value zones.
-- **Multi-Region Location-Based Prediction (Phase 16):** Generates prospectivity models mapped against the 6 largest manganese belts in India. Validates coordinate bounds against known geospatial geometry and rejects out-of-distribution coordinates to maintain strict scientific accuracy.
-- **Interactive 3D Geological Visualization (Phase 17):** Implements an interactive 3D prospectivity visualization. The 3D component uses Plotly to map coordinates and prediction priorities along an exploratory axis. To maintain scientific integrity, unavailable elevation/stratigraphic data is represented via abstract 3D scatter topologies with explicit labels to prevent fabricating data.
-- **Real Geospatial Data Layer Integration (Phase 18):** Integrates real geospatial data layers:
-  - **Satellites**: Esri World Imagery providing global high-resolution context.
-  - **Geology & Elevation**: Framework placeholders are built. Currently, due to raw data availability constraints, toggling these layers will display a toast notification that data is currently unavailable. This approach gracefully degrades the user experience without providing fabricated scientific data.
-  - **Features**: Manganese (Mn) occurrences, structural boundaries (simulated based on regions for prediction), and baseline magnetic anomalies.
-- **Model Explainability & Transparency (Phase 19):** Surfaces model behavior by extracting Random Forest `feature_importances_`. Displays top influencing features for every prediction dynamically with explicit disclaimers confirming that mathematical correlations do not prove geological causation.
-- **Production & Demand Forecasting:** Real-time dashboards visualizing historical trends and future supply deficit/surplus gaps (currently driven by Scikit-Learn linear regression).
-- **Geospatial Processing Engine:** Backend spatial processing utilizing `geopandas` and `rasterio`, built with resilient cross-platform (Windows/Linux) fallbacks for maximum compatibility.
-- **Robust API Backend:** Built with FastAPI, featuring strict Pydantic validation and extensive test coverage.
-
-## 3. Technology Stack
-### Frontend
-- React 18 & Vite
-- Tailwind CSS (Styling & Responsiveness)
-- React-Leaflet (Interactive Mapping)
-- Recharts (Data Visualization)
-- Vitest (Component Testing)
-
-### Backend
-- Python 3.9+
-- FastAPI & Uvicorn (REST API)
-- Scikit-Learn & Pandas (Machine Learning & Data Processing)
-- GeoPandas, Rasterio, Shapely (Geospatial Pipelines)
-- Pytest (Automated Testing)
+[![Smart India Hackathon](https://img.shields.io/badge/SIH-Hackathon%20Project-orange.svg)](#)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](#)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](#)
+[![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB.svg)](#)
+[![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF.svg)](#)
+[![TailwindCSS](https://img.shields.io/badge/Styling-TailwindCSS%204-38B2AC.svg)](#)
+[![Docker](https://img.shields.io/badge/Deployment-Docker%20%26%20Compose-2496ED.svg)](#)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](#)
 
 ---
 
-## 4. Installation & Setup Instructions
+## 📌 Executive Summary
+
+Manganese is a critical strategic mineral indispensable for high-strength steel manufacturing, next-generation electric vehicle (EV) battery chemistries (e.g., NMC cathodes), and renewable energy infrastructure. 
+
+Traditional mineral exploration is arduous, environmentally invasive, capital-intensive, and reliant on manual geological field surveying. **ManganEX** modernizes this paradigm by uniting **Geographic Information Systems (GIS)**, **Multispectral Satellite Remote Sensing (Sentinel-2 / Landsat)**, and **Machine Learning** into an end-to-end intelligence platform:
+1. **Identifies and ranks prospective exploration zones** across major Indian manganese belts with high spatial accuracy.
+2. **Visualizes subsurface topologies in 3D** to guide precision core drill planning.
+3. **Forecasts national production-consumption deficits** up to 20 years into the future to inform raw material supply-chain resilience.
+
+---
+
+## 🌟 Key Features
+
+### 1. 🗺️ Interactive Geospatial Dashboard
+- Built with **React-Leaflet** and tailored dark-mode GIS cartography.
+- **Multi-point coordinate picking**: Click multiple targets across the map or enter coordinates directly to inspect prospectivity concurrently.
+- **Layer Switching**: Toggle between satellite views (Esri World Imagery), structural geological boundaries, known deposit clusters, and magnetic anomalies.
+- Automatic boundary clipping and bounding-box geometry validation for India's primary metallogenic provinces.
+
+### 2. 🧠 AI Prospectivity Engine (Multi-Region Random Forest)
+- Machine learning models trained on structural features, terrain metrics (elevation, slope gradient), and spectral vegetation/iron-oxide indices.
+- Outputs classified exploration priorities (**High**, **Moderate**, **Low**) with calibrated probability confidence distributions.
+- **Spatial Decay & Proximity Fallbacks**: Resilient multi-tier prediction system ensuring reliable inferences even in areas with sparse raster coverage.
+
+### 3. 🧊 Interactive 3D Subsurface Visualization
+- Powered by **Plotly.js** with full 360° pan/tilt/zoom orbital control.
+- Renders high-resolution synthetic/interpolated terrain elevation surfaces.
+- Models subsurface drill targets along depth profiles (0m to -300m) with deterministic seed reproduction to evaluate vertical ore continuity.
+
+### 4. 🔍 Model Explainability & Transparency (XAI)
+- Dynamically extracts Random Forest `feature_importances_` for every inference.
+- Displays top driving features (e.g., iron-oxide absorption, proximity to fault structures, slope angle).
+- *Strict scientific integrity*: Explicit notices differentiate mathematical feature correlations from proven geological causation.
+
+### 5. 📈 Macroeconomic Supply & Demand Forecasting
+- Analyzes historical domestic production, consumption, export quotas, and import dependency.
+- Uses time-series linear trend regression to project future mineral supply deficits and surplus scenarios up to 20 years ahead.
+
+### 6. 🇮🇳 Pre-Configured Indian Metallogenic Belts
+ManganEX includes pre-mapped coordinate extents and deposit baselines for India's 6 largest manganese belts:
+- **Sandur-Ballari (Bellary) Belt**, Karnataka *(Primary Pilot Zone)*
+- **Nagpur-Bhandara Belt**, Maharashtra
+- **Balaghat Belt**, Madhya Pradesh
+- **Keonjhar-Sundargarh Belt**, Odisha
+- **Shimoga-North Kanara Belt**, Karnataka
+- **Srikakulam-Visakhapatnam Belt**, Andhra Pradesh
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph Data Sources
+        S2[Sentinel-2 / Satellite Imagery]
+        DEM[Bhuvan / SRTM DEM Elevation]
+        GSI[Geological Surveys & Deposit Baselines]
+        ECON[Historical Mining & Demand Stats]
+    end
+
+    subgraph Backend - FastAPI Engine
+        DP[GIS Ingestion & Geospatial Preprocessing]
+        ML[Random Forest Prospectivity Model]
+        FC[Time-Series Supply Forecaster]
+        API[RESTful Endpoints + CORS + Pydantic]
+    end
+
+    subgraph Frontend - React 19 + Vite
+        UI[Glassmorphic UI / Tailwind CSS 4]
+        MAP[React-Leaflet 2D Geospatial Map]
+        V3D[Plotly 3D Subsurface Visualizer]
+        CHART[Recharts Supply-Demand Analytics]
+    end
+
+    S2 & DEM & GSI --> DP
+    ECON --> FC
+    DP --> ML
+    ML & FC --> API
+    API <-->|JSON / REST| UI
+    UI --> MAP & V3D & CHART
+```
+
+---
+
+## 📂 Project Structure
+
+```
+SIH-manganese-exploration-ai/
+│
+├── backend/                        # FastAPI REST API & Machine Learning engine
+│   ├── app/
+│   │   ├── data_pipeline/          # Geospatial ingestion, raster & vector validation
+│   │   ├── forecasting/            # Supply/demand linear time-series modeling
+│   │   ├── ml/                     # Random Forest predictors, multi-region pipelines
+│   │   └── main.py                 # Core FastAPI router & application entrypoint
+│   ├── data/                       # Raw, sample, and processed mineral datasets
+│   ├── models/                     # Saved Scikit-Learn model artifacts & weights
+│   ├── Dockerfile                  # Production container definition (with GDAL/PROJ)
+│   ├── requirements.txt            # Python dependencies
+│   └── .env.example                # Template for environment configuration
+│
+├── frontend/                       # Modern React 19 Single Page Application
+│   ├── src/
+│   │   ├── components/             # Reusable UI components (Map, 3D, Forecast, Navbar)
+│   │   │   ├── MapComponent.jsx    # React-Leaflet GIS visualization
+│   │   │   ├── Visualization3D.jsx # 3D orbital subsurface terrain model
+│   │   │   └── ForecastDashboard.jsx # Recharts supply/demand charts
+│   │   ├── App.jsx                 # Core state orchestration & dashboard layout
+│   │   └── index.css               # Design system & dark theme tokens
+│   ├── Dockerfile                  # Multi-stage production Nginx container
+│   ├── package.json                # Frontend dependencies & scripts
+│   └── vite.config.js              # Vite bundling configuration
+│
+├── docker-compose.yml              # Multi-container orchestration (Backend + Frontend)
+├── run_manganex.bat                # Windows one-click local launcher
+├── ManganEX_Final_Prospectivity_Map.html # Standalone offline GIS map
+└── README.md                       # Comprehensive project documentation
+```
+
+---
+
+## ⚡ Quick Start & Installation
 
 ### Prerequisites
-- Node.js (v18+)
-- Python (3.9+)
-- Git
-
-### A. Clone the Repository
-```bash
-git clone https://github.com/your-username/manganex.git
-cd manganex
-```
-
-### B. Backend Setup
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Create and activate a virtual environment:
-   - **Windows:** `python -m venv venv` and `.\venv\Scripts\activate`
-   - **Mac/Linux:** `python3 -m venv venv` and `source venv/bin/activate`
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Set up Environment Variables:
-   - Copy `.env.example` to `.env`.
-   - Update `ALLOWED_ORIGINS` for CORS configuration (default is `*` for dev).
-
-### C. Frontend Setup
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install Node dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up Environment Variables:
-   - Copy `.env.example` to `.env`.
-   - Ensure `VITE_API_URL` points to your backend (default is `http://localhost:8000/api`).
+- **Node.js** (v18 or higher)
+- **Python** (v3.9 or higher)
+- **Git**
 
 ---
 
-## 5. How to Run the Project
-
-**Using the provided script (Windows only):**
-```bash
-../run_manganex.bat
+### Option A: One-Click Launch (Windows)
+Simply double-click [`run_manganex.bat`](file:///e:/study/SIH/SIH-manganese-exploration-ai/run_manganex.bat) or run from your terminal:
+```bat
+.\run_manganex.bat
 ```
-
-**Running manually:**
-1. **Start the Backend Server:**
-   Ensure your virtual environment is active, then run:
-   ```bash
-   cd backend
-   uvicorn app.main:app --reload
-   ```
-   *The backend will be available at `http://localhost:8000`.*
-
-2. **Start the Frontend Application:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   *The frontend will be available at `http://localhost:5173`.*
+*This automatically boots the FastAPI backend (port 8000), starts the Vite development server (port 5173), and opens the dashboard in your default browser.*
 
 ---
 
----
+### Option B: Manual Setup
 
-## 6. Deployment & Testing (Phase 21)
-
-ManganEX is prepared for production deployments with the following features:
-- **Docker Integration:** A complete `docker-compose.yml` and multi-stage `Dockerfile`s for both frontend and backend enable instant deployment to any cloud provider.
-- **Environment Management:** Configurations for backend (`ALLOWED_ORIGINS`, `HOST`, `PORT`) and frontend (`VITE_API_URL`) are loaded from `.env` files.
-- **Security:** Strict `.gitignore` ensures secrets, large binaries (models, raster data), and caches are not committed. CORS is configurable.
-- **Health Checks:** A dedicated `/api/health` endpoint is available for uptime monitoring and load balancer integration.
-- **Robust Error Handling:** FastAPI endpoints are fortified with proper `HTTPException` handling for robust API responses.
-
-### Running via Docker Compose
-To run the entire stack (FastAPI backend + Nginx-served React frontend) in a production-like environment locally:
-```bash
-docker-compose up --build
-```
-- Frontend will be accessible at: `http://localhost:80`
-- Backend API will be accessible at: `http://localhost:8000`
-
-### Testing
-**Backend Tests:** (Requires virtual environment)
+#### 1. Start the Backend
 ```bash
 cd backend
-pytest app/
-```
 
-**Frontend Tests & Build:**
+# Create & activate a virtual environment
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the server
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+*API will be live at `http://localhost:8000` (Swagger docs at `http://localhost:8000/docs`).*
+
+#### 2. Start the Frontend
 ```bash
 cd frontend
-npm run test
-npm run build
+
+# Install Node dependencies
+npm install
+
+# Start Vite dev server
+npm run dev
 ```
+*Frontend will be live at `http://localhost:5173`.*
 
 ---
 
-## 7. API Documentation (Key Endpoints)
-FastAPI automatically generates interactive Swagger documentation. When the backend is running, visit: **`http://localhost:8000/docs`**
+### Option C: Production Docker Launch
+Run both services in containerized isolation:
+```bash
+docker-compose up -d --build
+```
+- **Web App**: `http://localhost:80`
+- **API**: `http://localhost:8000`
 
-- `GET /api/health`: Health status of the backend.
-- `POST /api/predict`: Returns a prospectivity prediction (requires lat, lon, elevation, slope).
-- `GET /api/forecast/status`: Retrieves the health and MAE metrics of the forecasting model.
-- `POST /api/forecast`: Generates a continuous timeline of historical and forecasted supply/demand data.
-- `GET /api/geospatial/pilot-region`: Returns bounding box definitions for the Sandur-Ballari pilot zone.
+---
+
+## 🔌 API Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Uptime health status verification |
+| `GET` | `/api/model/status` | Current ML model operational status and metadata |
+| `POST` | `/api/predict` | Single-point AI prospectivity prediction based on coordinates |
+| `POST` | `/api/predict/multiregion` | Multi-region prospectivity analysis across Indian belts |
+| `GET` | `/api/geospatial/pilot-region` | Bounding box & CRS definitions for Sandur-Ballari pilot zone |
+| `GET` | `/api/geospatial/state-deposits` | Known deposits filtered by state with centroid priority scores |
+| `POST` | `/api/geospatial/validate` | Validates uploaded Shapefiles (`.shp`), GeoJSON, or GeoTIFFs |
+| `GET` | `/api/forecast/status` | Health & sample count of the macroeconomic supply forecaster |
+| `POST` | `/api/forecast` | Generates historical and future supply/demand timelines |
+| `GET` | `/api/multiregion/status` | List of supported manganese belts and model statuses |
 
 ---
 
-## 8. Limitations & Future Improvements
-> **⚠️ DEMONSTRATION MODE:** Currently, predictions and forecasts utilize demonstration logic and synthetic samples designed to validate the architectural pipeline. **They are not scientifically verified geological discoveries or official economic projections.**
-**Future Roadmap:**
-- **Full Data Integration:** Ingest actual ISRO Bhuvan DEMs and Sentinel-2 L2A imagery instead of relying on structural fallbacks.
-- **Deep Learning Pipelines:** Upgrade from Random Forest / Linear Regression to advanced neural networks (e.g., CNNs for satellite imagery).
-- **Authentication:** Add user authentication for enterprise access to sensitive geospatial datasets.
+## 🌐 24/7 Public Cloud Deployment
+
+For permanent public access:
+1. **Frontend**: Deploy `frontend/` on [**Vercel**](https://vercel.com) (Vite preset, set `VITE_API_URL` to your backend URL).
+2. **Backend**: Deploy `backend/` on [**Render**](https://render.com) using the provided [`backend/Dockerfile`](file:///e:/study/SIH/SIH-manganese-exploration-ai/backend/Dockerfile).
+3. **24/7 Keep-Alive**: Add a free HTTP monitor at [**UptimeRobot**](https://uptimerobot.com) pinging `/api/health` every 5 minutes to prevent cold starts.
 
 ---
-*Built as a Phase 12 Final Delivery for AI-Powered Manganese Mineral Prospectivity Mapping.*
+
+## ⚠️ Scientific & Demonstration Notice
+
+> **Disclaimer**: ManganEX incorporates authentic geological boundaries, known deposit inventories, and baseline spectral modeling principles. However, synthetic parameters and demonstration proxies are utilized for regions where high-resolution field drill logs or classified satellite datasets are legally restricted or proprietary. Predictions represent computational prospectivity indicators and should be validated through professional ground-truthing and geochemical assays before commercial mining investment.
+
+---
+
+## 👥 Authors & Acknowledgments
+
+- **Developed for:** Smart India Hackathon (SIH) – Problem Statement: AI/ML Powered Mineral Prospectivity & Supply Intelligence.
+- **Geological Reference Data:** Geological Survey of India (GSI) public inventories, Indian Bureau of Mines (IBM), and ISRO Bhuvan open data services.

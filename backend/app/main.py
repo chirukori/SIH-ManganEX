@@ -40,7 +40,7 @@ allowed_origins = [o.strip() for o in allowed_origins_str.split(",")] if allowed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=(allowed_origins_str != "*"),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -344,6 +344,8 @@ def predict_multiregion(request: PredictionRequest):
 
     priority, score = "Low", 0.15
     probabilities = {"High": 0.05, "Medium": 0.25, "Low": 0.70}
+    is_fallback_features = True
+    explainability_method = "Proximity/Spatial Decay Model"
 
     if predictor is not None:
         try:
@@ -352,34 +354,33 @@ def predict_multiregion(request: PredictionRequest):
             probs    = res.get("probabilities", {})
             score    = round(probs.get("High",0)*1.0 + probs.get("Medium",0)*0.5 + probs.get("Low",0)*0.1, 2)
             probabilities = probs
-            
-            # Apply Spatial Prospectivity Index (SPI) if fallback features were used
-            if res.get("is_fallback_features", False) or nkm > 0.5:
-                # Continuous distance decay: high score near deposit, decaying exponentially
-                # score = 0.90 * e^(-0.15 * nkm) + base_uncertainty
-                decay_score = 0.90 * math.exp(-0.15 * nkm) + 0.10
-                score = round(min(max(decay_score, 0.05), 0.95), 2)
-                
-                # Derive priority based on decayed score
-                if score >= 0.70:
-                    priority = "High"
-                    probabilities = {"High": score, "Medium": 1.0 - score, "Low": 0.0}
-                elif score >= 0.40:
-                    priority = "Medium"
-                    probabilities = {"High": round(max(score-0.4, 0), 2), "Medium": score, "Low": round(1.0 - score, 2)}
-                else:
-                    priority = "Low"
-                    probabilities = {"High": 0.0, "Medium": score, "Low": round(1.0 - score, 2)}
-                    
-                explainability_method = "Spatial Decay Model (Fallback from distant spectral features)"
-            else:
-                explainability_method = "Direct Spectral Model (High-confidence features)"
-                
+            is_fallback_features = res.get("is_fallback_features", False)
+            explainability_method = "Direct Spectral Model (High-confidence features)"
         except Exception as e:
-            explainability_method = f"Error in spectral model: {str(e)}"
-            pass
+            is_fallback_features = True
+            explainability_method = f"Spatial Decay Model (Fallback from model error: {str(e)})"
     else:
-        explainability_method = "Model Unavailable"
+        explainability_method = "Spatial Decay Model (Model Unavailable)"
+
+    # Apply Spatial Prospectivity Index (SPI) if fallback features were used or model failed
+    if is_fallback_features or nkm > 0.5:
+        # Continuous distance decay: high score near deposit, decaying exponentially
+        decay_score = 0.90 * math.exp(-0.15 * nkm) + 0.10
+        score = round(min(max(decay_score, 0.05), 0.95), 2)
+        
+        # Derive priority based on decayed score
+        if score >= 0.70:
+            priority = "High"
+            probabilities = {"High": score, "Medium": round(1.0 - score, 2), "Low": 0.0}
+        elif score >= 0.40:
+            priority = "Medium"
+            probabilities = {"High": round(max(score-0.4, 0), 2), "Medium": score, "Low": round(1.0 - score, 2)}
+        else:
+            priority = "Low"
+            probabilities = {"High": 0.0, "Medium": score, "Low": round(1.0 - score, 2)}
+            
+        if "Fallback" not in explainability_method:
+            explainability_method = "Spatial Decay Model (Fallback from distant spectral features)"
 
     in_region = matched is not None
     rd = matched[1] if matched else {}

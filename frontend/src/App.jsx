@@ -61,6 +61,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [detailedData, setDetailedData] = useState(null);
   const [mapLoc, setMapLoc] = useState(null);
+  const [selectedLocations, setSelectedLocations] = useState([]);
 
   // Mode & region
   const [mode, setMode]   = useState('multiregion');
@@ -96,50 +97,75 @@ function App() {
 
   // ── Map click ─────────────────────────────────────────────────
   const handleMapClick = (lat, lng) => {
-    setCoords({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+    const latStr = lat.toFixed(6);
+    const lngStr = lng.toFixed(6);
+    
+    setSelectedLocations(prev => {
+      if (prev.some(loc => loc.lat === latStr && loc.lng === lngStr)) return prev;
+      return [...prev, { lat: latStr, lng: lngStr }];
+    });
+
+    setCoords({ lat: latStr, lng: lngStr });
     setResult(null);
     setDetailedData(null);
     setError(null);
     setMapLoc({ lat, lng });
     if (mode === 'multiregion') setRegionKey(null);
-    
-    // Auto-predict on map click to load side panel immediately
-    setTimeout(() => {
-      document.getElementById('predict-btn')?.click();
-    }, 50);
   };
 
   // ── Submit prediction ─────────────────────────────────────────
   const handlePredict = async (e) => {
     e && e.preventDefault();
-    const lat = parseFloat(coords.lat);
-    const lng = parseFloat(coords.lng);
-    if (isNaN(lat) || isNaN(lng)) { setError('Enter valid coordinates or click the map.'); return; }
-    if (lat < -90 || lat > 90)   { setError('Latitude must be −90 to 90.'); return; }
-    if (lng < -180 || lng > 180) { setError('Longitude must be −180 to 180.'); return; }
+    
+    const locationsToAnalyze = selectedLocations.length > 0 
+      ? selectedLocations.map(l => ({ lat: parseFloat(l.lat), lng: parseFloat(l.lng) }))
+      : [{ lat: parseFloat(coords.lat), lng: parseFloat(coords.lng) }];
+      
+    for (const loc of locationsToAnalyze) {
+      if (isNaN(loc.lat) || isNaN(loc.lng)) { setError('Enter valid coordinates or click the map.'); return; }
+      if (loc.lat < -90 || loc.lat > 90)   { setError('Latitude must be −90 to 90.'); return; }
+      if (loc.lng < -180 || loc.lng > 180) { setError('Longitude must be −180 to 180.'); return; }
+    }
 
     setLoading(true); setError(null); setResult(null); setDetailedData(null);
-    setMapLoc({ lat, lng });
+    
+    const lastLoc = locationsToAnalyze[locationsToAnalyze.length - 1];
+    setMapLoc({ lat: lastLoc.lat, lng: lastLoc.lng });
 
     try {
-      // Execute both standard and detailed predictions in parallel
-      const req = { latitude: lat, longitude: lng };
+      const newHistoryEntries = [];
+      let lastData = null;
+      let lastDetailed = null;
       
-      const p1 = mode === 'multiregion' ? predictMultiRegion(req) : predictProspectivity(req);
-      const p2 = predictDetailedAnalysis(req);
-      
-      const [data, detailed] = await Promise.all([p1, p2]);
+      for (const loc of locationsToAnalyze) {
+        const req = { latitude: loc.lat, longitude: loc.lng };
+        const p1 = mode === 'multiregion' ? predictMultiRegion(req) : predictProspectivity(req);
+        const p2 = predictDetailedAnalysis(req);
+        
+        const [data, detailed] = await Promise.all([p1, p2]);
+        lastData = data;
+        lastDetailed = detailed;
+        
+        newHistoryEntries.push({ 
+          id: Date.now() + Math.random(), 
+          ts: new Date().toLocaleTimeString(), 
+          lat: loc.lat, 
+          lng: loc.lng, 
+          result: data 
+        });
+      }
 
-      setResult(data);
-      setDetailedData(detailed);
-      setHistory(prev => [{ id: Date.now(), ts: new Date().toLocaleTimeString(), lat, lng, result: data }, ...prev]);
+      setResult(lastData);
+      setDetailedData(lastDetailed);
+      setHistory(prev => [...newHistoryEntries.reverse(), ...prev]);
+      setSelectedLocations([]);
     } catch (err) {
       setError(err.response?.data?.detail || err.message || 'Prediction service error.');
     } finally { setLoading(false); }
   };
 
-  const handleReset = () => { setCoords({ lat: '', lng: '' }); setResult(null); setDetailedData(null); setError(null); setMapLoc(null); setRegionKey(null); };
-  const handleClearHistory = () => { setHistory([]); setMapLoc(null); setResult(null); setDetailedData(null); };
+  const handleReset = () => { setCoords({ lat: '', lng: '' }); setResult(null); setDetailedData(null); setError(null); setMapLoc(null); setRegionKey(null); setSelectedLocations([]); };
+  const handleClearHistory = () => { setHistory([]); setMapLoc(null); setResult(null); setDetailedData(null); setSelectedLocations([]); };
 
   const filteredHistory = history.filter(h => filter === 'All' || h.result?.priority === filter);
 
@@ -262,13 +288,19 @@ function App() {
                           </button>
                           <button type="button" className="btn btn-ghost" onClick={handleReset} title="Reset"><Ic.Refresh /></button>
                         </div>
+                        {selectedLocations.length > 1 && (
+                          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{selectedLocations.length} locations selected</span>
+                            <span style={{ cursor: 'pointer', color: '#ef4444' }} onClick={() => setSelectedLocations([])}>Clear selection</span>
+                          </div>
+                        )}
                       </form>
                     )}
 
                     {error && <div className="alert alert-error" style={{ marginTop: 10 }}><span>⚠</span>{error}</div>}
                     {mode !== 'state' && (
                       <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8 }}>
-                        💡 Click anywhere on the map to set coordinates automatically
+                        💡 Click multiple locations on the map to analyse them together
                       </p>
                     )}
                   </div>
@@ -391,6 +423,7 @@ function App() {
                       <MapComponent
                         markers={filteredHistory}
                         activeLocation={mapLoc}
+                        selectedLocations={selectedLocations}
                         onMapClick={handleMapClick}
                         predictionMode={mode}
                         onLayerUnavailable={handleLayerUnavail}

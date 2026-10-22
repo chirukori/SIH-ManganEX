@@ -113,6 +113,7 @@ const LayerSelector = ({ activeLayer, onChange }) => {
 const MapComponent = ({
   activeLocation,
   markers = [],
+  selectedLocations = [],
   onMapClick,
   showRegionBboxes = false,
   highlightedRegionKey = null,
@@ -174,7 +175,7 @@ const MapComponent = ({
                   eventHandlers={{
                     click: (e) => {
                       e.originalEvent?.stopPropagation();
-                      if (onMapClick) onMapClick(z.lat, z.lon);
+                      if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
                     }
                   }}
                 >
@@ -196,7 +197,7 @@ const MapComponent = ({
                 eventHandlers={{
                   click: (e) => {
                     e.originalEvent?.stopPropagation();
-                    if (onMapClick) onMapClick(z.lat, z.lon);
+                    if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
                   }
                 }}
               >
@@ -217,8 +218,20 @@ const MapComponent = ({
         {/* Auto-recenter */}
         {hasActive && <Recenter lat={activeLocation.lat} lng={activeLocation.lng} />}
 
-        {/* Active location marker */}
-        {hasActive && (
+        {/* Selected multiple locations */}
+        {selectedLocations.map((loc, i) => (
+          <Marker key={`sel-${i}`} position={[parseFloat(loc.lat), parseFloat(loc.lng)]} icon={activeMarkerIcon}>
+            <Popup>
+              <div dangerouslySetInnerHTML={{ __html: makePopupHtml('Selected Location ' + (i + 1), [
+                ['Lat', `${parseFloat(loc.lat).toFixed(5)}°N`, true],
+                ['Lon', `${parseFloat(loc.lng).toFixed(5)}°E`, true],
+              ]) }} />
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Active location marker (if typed manually and no selectedLocations) */}
+        {hasActive && selectedLocations.length === 0 && (
           <Marker position={[activeLocation.lat, activeLocation.lng]} icon={activeMarkerIcon}>
             <Popup>
               <div dangerouslySetInnerHTML={{ __html: makePopupHtml('Selected Location', [
@@ -238,7 +251,7 @@ const MapComponent = ({
             eventHandlers={{
               click: (e) => {
                 e.originalEvent?.stopPropagation();
-                if (onMapClick) onMapClick(m.lat, m.lng);
+                if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
               }
             }}
           >
@@ -264,6 +277,12 @@ const MapComponent = ({
                 color: region.color, weight: isHighlit ? 2.5 : 1.5,
                 fillOpacity: isHighlit ? 0.12 : 0.04,
                 dashArray: isHighlit ? '5 4' : '7 5',
+              }}
+              eventHandlers={{
+                click: (e) => {
+                  e.originalEvent?.stopPropagation();
+                  if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
+                }
               }}
             >
               <Popup>

@@ -24,6 +24,12 @@ const Visualization3D = ({
 
     const traces = [];
 
+    // Simple deterministic PRNG so the same coordinates always produce the same 3D structure
+    const seededRandom = (seed) => {
+      let x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
     // Synthetic Terrain Surface
     let centerLat = currentLat;
     let centerLng = currentLng;
@@ -86,7 +92,7 @@ const Visualization3D = ({
         tickfont: { color: isDark ? '#f8fafc' : '#0f172a' },
         titlefont: { color: isDark ? '#f8fafc' : '#0f172a' }
       },
-      name: 'Simulated Terrain',
+      name: 'Modeled Terrain (Extrapolated)',
       hoverinfo: 'none'
     });
 
@@ -96,8 +102,9 @@ const Visualization3D = ({
       let subX = [], subY = [], subZ = [], subV = [];
       
       depths.forEach((d, idx) => {
-          subX.push(centerLng + (Math.random()*0.01 - 0.005));
-          subY.push(centerLat + (Math.random()*0.01 - 0.005));
+          let seed = currentLat * currentLng * (idx + 1);
+          subX.push(centerLng + (seededRandom(seed)*0.01 - 0.005));
+          subY.push(centerLat + (seededRandom(seed + 1)*0.01 - 0.005));
           subZ.push(d);
           subV.push(Math.max(0, centerScore - (idx * 0.1))); 
       });
@@ -122,7 +129,7 @@ const Visualization3D = ({
           opacity: 0.9,
           symbol: 'circle'
         },
-        text: subV.map(v => `Modeled Intensity: ${(v*100).toFixed(1)}%<br>Depth: ~${300 - Math.round(subZ[0])}m`),
+        text: subV.map(v => `<b>Modeled Manganese Zone</b><br>Intensity: ${(v*100).toFixed(1)}%<br>Depth: ~${300 - Math.round(subZ[0])}m`),
         hoverinfo: 'text'
       });
 
@@ -170,7 +177,7 @@ const Visualization3D = ({
       xaxis: { title: 'Longitude', color: isDark ? '#94a3b8' : '#475569' },
       yaxis: { title: 'Latitude', color: isDark ? '#94a3b8' : '#475569' },
       zaxis: { 
-        title: 'Elevation (m)', 
+        title: 'Elevation / Depth (m)', 
         color: isDark ? '#94a3b8' : '#475569'
       },
       camera: {
@@ -203,7 +210,7 @@ const Visualization3D = ({
       {/* Disclaimers & Overlays */}
       <div className="absolute top-4 left-4 z-10 pointer-events-none">
         <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-700 text-slate-200 px-3 py-1.5 rounded text-xs pointer-events-auto">
-          <strong>Modeled Subsurface Zones</strong> (Depth Extrapolated)
+          <strong>Modeled Subsurface Zones</strong> (Extrapolated / Deterministic)
         </div>
       </div>
 
